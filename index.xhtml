@@ -3,8 +3,28 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
     <head>
         <title>LD37 - by Rialgar</title>
+        <script type="application/javascript" src="Grains.js"></script>
+        <script type="application/javascript" src="main.js"></script>
+        <style>
+            html, body {
+                padding: 0;
+                margin: 0;
+                width: 100%;
+                background-color: black;
+                overflow: hidden;
+            }
+            canvas {
+                border: 1px solid deeppink;
+                display: block;
+                position: absolute;
+                image-rendering: -moz-crisp-edges;         /* Firefox */
+                image-rendering:   -o-crisp-edges;         /* Opera */
+                image-rendering: crisp-edges;
+                image-rendering: pixelated;
+            }
+        </style>
     </head>
     <body>
-        
+        <canvas id="canvas"/>
     </body>
 </html>
