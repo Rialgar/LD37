@@ -32,6 +32,8 @@ window.addEventListener('load', function () {
     window.addEventListener('resize', onResize);
     onResize();
 
+    var autofire = false;
+
     var down = {};
     window.addEventListener('keydown', function (ev) {
         console.log(ev.keyCode);
@@ -39,15 +41,35 @@ window.addEventListener('load', function () {
     });
     window.addEventListener('keyup', function (ev) {
         down[ev.keyCode] = false;
+        if(ev.keyCode === 70){
+            autofire = !autofire;
+        }
     });
 
-    var gamepad = {leftRight: 0, leftShoulder: 0, rShoulder: 0};
+    var gamepad = {leftRight: 0, leftShoulder: 0, rShoulder: 0, fire: false, aimAngle: 0};
+
+    var mouseUser = false;
 
     function readGamePad (pad) {
         if (Math.abs(pad.axes[0]) > 0.15) {
             gamepad.leftRight = pad.axes[0];
         } else {
             gamepad.leftRight = 0;
+        }
+
+        var aimLR = 0;
+        if (Math.abs(pad.axes[2]) > 0.3) {
+            aimLR = pad.axes[2];
+        }
+
+        var aimUD = 0;
+        if (Math.abs(pad.axes[3]) > 0.3) {
+            aimUD = pad.axes[3];
+        }
+
+        if(aimLR != 0 || aimUD != 0){
+            mouseUser = false;
+            gamepad.aimAngle = Math.atan2(-aimLR, -aimUD);
         }
 
         if (pad.buttons[6].pressed) {
@@ -61,11 +83,15 @@ window.addEventListener('load', function () {
         } else {
             gamepad.rightShoulder = 0;
         }
+
+        gamepad.fire = pad.buttons[4].pressed || pad.buttons[5].pressed;
     }
 
     var mouseX, mouseY;
 
     function mouseMove (ev) {
+        mouseUser = true;
+
         var boundingBox = canvas.getBoundingClientRect();
         mouseX = (ev.clientX - boundingBox.left) / scale;
         mouseY = gameHeight - (ev.clientY - boundingBox.top) / scale;
@@ -108,12 +134,16 @@ window.addEventListener('load', function () {
             }
         }
         player.move(mx, grains);
-        var dx = mouseX - player.x;
-        var dy = mouseY - player.y;
-        player.aim(Math.atan2(-dx, dy));
+        if(mouseUser) {
+            var dx = mouseX - player.x;
+            var dy = mouseY - player.y;
+            player.aim(Math.atan2(-dx, dy));
+        } else {
+            player.aim(gamepad.aimAngle);
+        }
         player.draw(grains.drawOffset);
 
-        if (down['mouse']) {
+        if (autofire || down['mouse'] || gamepad.fire) {
             var bullet = player.shoot(grains);
             if (bullet) {
                 bullets.push(bullet);

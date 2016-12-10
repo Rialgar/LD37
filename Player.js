@@ -33,7 +33,7 @@ Player.prototype.move = function (dx, grains) {
     this.x = Math.max(this.halfWidth, Math.min(this.ctx.canvas.width - this.halfWidth - 1, this.x + dx));
     var sum = 0;
     for (var checkX = this.x - this.halfWidth; checkX <= this.x + this.halfWidth; checkX++) {
-        sum += grains.findLowestFree(checkX, this.y - 4);
+        sum += grains.findLowestFree(Math.round(checkX), this.y - 4);
     }
     this.y = Math.round(sum / (2 * this.halfWidth + 1)) + 4;
     if(this.cooldown > 0){
@@ -52,11 +52,13 @@ Player.prototype.aim = function(angle){
 };
 
 Player.prototype.shoot = function(grains){
+    var roundX = Math.round(this.x);
+    var roundY = Math.round(this.y);
     if(this.cooldown <= 0) {
         var inputGrains = [];
         for(var dy = -1; dy >= -6 && inputGrains.length < 9; dy--){
             for(var dx = -this.halfWidth; dx <= this.halfWidth && inputGrains.length < 9; dx++){
-                var grain = grains.getGrain(this.x+dx, this.y+dy);
+                var grain = grains.getGrain(roundX+dx, roundY+dy);
                 if(grain){
                     inputGrains.push(grain);
                 }
