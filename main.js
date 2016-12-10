@@ -139,25 +139,27 @@ window.addEventListener('load', function () {
 
     window.requestAnimationFrame(frame);
 
-    window.debugMode = function () {
-        window.grains = grains;
-        window.player = player;
-        window.makeGrain = function (x, y, r, g, b, many) {
-            for (var i = 0; i < many; i++) {
-                grains.makeGrain(x, y + i, r, g, b);
+    if(window.location.hostname === 'localhost') {
+        window.debugMode = function () {
+            window.grains = grains;
+            window.player = player;
+            window.makeGrain = function (x, y, r, g, b, many) {
+                for (var i = 0; i < many; i++) {
+                    grains.makeGrain(x, y + i, r, g, b);
+                }
+            };
+            window.makeRandomGrains = function (count) {
+                for (var i = 0; i < count; i++) {
+                    var r = Math.random();
+                    grains.makeGrain(
+                        Math.floor(Math.pow(Math.random(), 2) * gameWidth),
+                        Math.floor(Math.random() * gameHeight) + gameHeight,
+                        r > 0.5 ? 255 : 0,
+                        r > 0.5 ? 0 : 255,
+                        0
+                    );
+                }
             }
         };
-        window.makeRandomGrains = function (count) {
-            for (var i = 0; i < count; i++) {
-                var r = Math.random();
-                grains.makeGrain(
-                    Math.floor(Math.pow(Math.random(), 2) * gameWidth),
-                    Math.floor(Math.random() * gameHeight) + gameHeight,
-                    r > 0.5 ? 255 : 0,
-                    r > 0.5 ? 0 : 255,
-                    0
-                );
-            }
-        }
-    };
+    }
 });
