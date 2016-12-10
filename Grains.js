@@ -7,18 +7,28 @@ function Grains (ctx) {
     this.drawOffset = 0;
 }
 
-Grains.prototype.makeGrain = function (x, y) {
+Grains.prototype.makeGrain = function (x, y, r, g, b) {
+    if(typeof x === 'object'){
+        y = x.y;
+        r = x.r;
+        g = x.g;
+        b = x.b;
+        x = x.x;
+    }
     if (y < 0 || x < 0 || x >= this.imageData.width) {
         throw new Error("Grain position out of bounds. (" + x + "," + y + ")");
     } else if (y > (1 << 20)) {
         throw new Error("Icarus flew too close to the sun! (" + x + "," + y + ")");
     }
     if (this.map[y] && this.map[y][x]) {
-        return;
+        y = this.findLowestFree(x, y, true);
     }
     var grain = {
         x: x,
         y: y,
+        r: r,
+        g: g,
+        b: b,
         active: true
     };
     this.activeGrains.push(grain);
@@ -26,7 +36,7 @@ Grains.prototype.makeGrain = function (x, y) {
         this.map.push([]);
     }
     this.map[y][x] = grain;
-    this.putGrainPixel(grain.x, grain.y, 255, 255, 255, 255);
+    this.putGrainPixel(grain, 255);
 };
 
 Grains.prototype.getDxArray = function () {
@@ -44,21 +54,22 @@ Grains.prototype.getDxArray = function () {
 
 // we use bottom left as 0, 0
 // applies draw offset
-Grains.prototype.putGrainPixel = function (x, y, r, g, b, a) {
-    y = this.imageData.height - 1 - (y - this.drawOffset);
+Grains.prototype.putGrainPixel = function (grain, alpha) {
+    var y = this.imageData.height - 1 - (grain.y - this.drawOffset);
+    var x = grain.x;
     if (x < 0 || x >= this.imageData.width || y < 0 || y >= this.imageData.height) {
         return;
     }
     var base = ((y * this.imageData.width) + x) * 4;
-    this.imageData.data[base] = r;
-    this.imageData.data[base + 1] = g;
-    this.imageData.data[base + 2] = b;
-    this.imageData.data[base + 3] = a;
+    this.imageData.data[base] = grain.r;
+    this.imageData.data[base + 1] = grain.g;
+    this.imageData.data[base + 2] = grain.b;
+    this.imageData.data[base + 3] = alpha;
 };
 
 Grains.prototype.removeGrain = function (grain) {
     this.map[grain.y][grain.x] = false;
-    this.putGrainPixel(grain.x, grain.y, 0, 0, 0, 0);
+    this.putGrainPixel(grain, 0);
 
     if (grain.y < this.map.length - 1) {
         var dxArray = this.getDxArray();
@@ -97,7 +108,7 @@ Grains.prototype.moveGrain = function (grain) {
         grain.active = false;
     }
     if (newCoordinates) {
-        this.putGrainPixel(grain.x, grain.y, 255, 255, 255, 255);
+        this.putGrainPixel(grain, 255);
     }
 };
 
@@ -107,4 +118,22 @@ Grains.prototype.updateGrains = function () {
     this.nextActiveGrains = [];
 
     this.ctx.putImageData(this.imageData, 0, 0);
+};
+
+Grains.prototype.isFree = function (x, y, activeIsBlocked) {
+    if (y < 0 || x < 0 || x >= this.imageData.width) {
+        return false;
+    }
+    return !this.map[y] || !this.map[y][x] || (!activeIsBlocked && this.map[y][x].active);
+};
+
+Grains.prototype.findLowestFree = function (x, y, activeIsBlocked) {
+    var out = y;
+    while (out >= 0 && this.isFree(x, out, activeIsBlocked)) {
+        out--;
+    }
+    while (!this.isFree(x, out, activeIsBlocked)) {
+        out++;
+    }
+    return out;
 };
