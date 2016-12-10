@@ -137,3 +137,7 @@ Grains.prototype.findLowestFree = function (x, y, activeIsBlocked) {
     }
     return out;
 };
+
+Grains.prototype.getGrain = function(x, y){
+    return this.map[y] && this.map[y][x];
+};

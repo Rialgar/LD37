@@ -1,37 +1,36 @@
-function Bullet (x, y, angle, ctx) {
+function Bullet (x, y, angle, inputGrains, ctx) {
     this.x = x;
     this.y = y;
     this.angle = angle;
     this.ctx = ctx;
-    //TODO be built from grains passed in, not 9 new ones
-    this.grains = [];
-    for (var dx = -1; dx <= 1; dx++) {
-        for (var dy = -1; dy <= 1; dy++) {
-            this.grains.push({
-                x: dx,
-                y: dy,
-                r: Math.floor(100 + Math.random() * 155),
-                g: Math.floor(100 + Math.random() * 155),
-                b: Math.floor(100 + Math.random() * 155)
-            });
-        }
-    }
 
+    this.grains = [];
     this.canvas = document.createElement('canvas');
     this.canvas.height = 3;
     this.canvas.width = 3;
     var innerCtx = this.canvas.getContext('2d');
     var imageData = innerCtx.createImageData(3, 3);
-    for (var gx = 0; gx < 3; gx++) {
-        for (var gy = 0; gy < 3; gy++) {
-            var base = gx * 3 + gy;
-            imageData.data[base * 4] = this.grains[base].r;
-            imageData.data[base * 4 + 1] = this.grains[base].g;
-            imageData.data[base * 4 + 2] = this.grains[base].b;
-            imageData.data[base * 4 + 3] = 255
+
+    for (var dx = -1; dx <= 1; dx++) {
+        for (var dy = -1; dy <= 1; dy++) {
+            var input = inputGrains.pop();
+            this.grains.push({
+                x: dx,
+                y: dy,
+                r: input.r,
+                g: input.g,
+                b: input.b
+            });
+            var base = ((dy + 1) * imageData.width + (dx + 1)) * 4;
+            imageData.data[base] = input.r;
+            imageData.data[base + 1] = input.g;
+            imageData.data[base + 2] = input.b;
+            imageData.data[base + 3] = 255;
         }
     }
     innerCtx.putImageData(imageData, 0, 0);
+
+    this.age = 0;
 }
 
 Bullet.prototype.move = function (grains) {
@@ -47,8 +46,18 @@ Bullet.prototype.move = function (grains) {
     } else if (this.x > this.ctx.canvas.width - 2) {
         this.x = this.ctx.canvas.width - 2;
         this.hitSomething = true;
+    } else if(this.age > 300){
+        this.hitSomething = true;
+    } else {
+        for (var dx = -1; dx <= 1 && !this.hitSomething; dx++) {
+            for (var dy = -1; dy <= 1 && !this.hitSomething; dy++) {
+                if (!grains.isFree(Math.round(this.x) + dx, Math.round(this.y) + dy)) {
+                    this.hitSomething = true;
+                }
+            }
+        }
     }
-    //TODO hitting a non-active grain should destroy it
+    this.age += 1;
 };
 
 Bullet.prototype.draw = function (drawOffset) {

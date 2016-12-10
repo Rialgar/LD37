@@ -114,7 +114,7 @@ window.addEventListener('load', function () {
         player.draw(grains.drawOffset);
 
         if (down['mouse']) {
-            var bullet = player.shoot();
+            var bullet = player.shoot(grains);
             if (bullet) {
                 bullets.push(bullet);
             }
@@ -149,12 +149,13 @@ window.addEventListener('load', function () {
         };
         window.makeRandomGrains = function (count) {
             for (var i = 0; i < count; i++) {
+                var r = Math.random();
                 grains.makeGrain(
                     Math.floor(Math.pow(Math.random(), 2) * gameWidth),
                     Math.floor(Math.random() * gameHeight) + gameHeight,
-                    Math.floor(100 + Math.random() * 155),
-                    Math.floor(100 + Math.random() * 155),
-                    Math.floor(100 + Math.random() * 155)
+                    r > 0.5 ? 255 : 0,
+                    r > 0.5 ? 0 : 255,
+                    0
                 );
             }
         }
