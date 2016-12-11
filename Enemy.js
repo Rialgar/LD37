@@ -15,15 +15,16 @@ function Enemy (x, y, size, ctx) {
     this.imageData = this.innerContext.getImageData(0, 0, 2 * this.radius + 1, 2 * this.radius + 1);
 
     this.grains = [];
+    var color = Enemy.getColorForSize(size);
     for (var dx = -this.radius; dx <= this.radius; dx++) {
         for (var dy = -this.radius; dy <= this.radius; dy++) {
             if (dx * dx + dy * dy <= this.radius * this.radius) {
                 var grain = {
                     x: dx,
                     y: dy,
-                    r: 0,
-                    g: 255,
-                    b: 0
+                    r: color.r,
+                    g: color.g,
+                    b: color.b
                 };
                 this.grains.push(grain);
                 var gy = this.radius - dy;
@@ -43,12 +44,37 @@ function Enemy (x, y, size, ctx) {
     this.wasKilled = false;
     this.wasHit = false;
 
-    this.age = 0;
+    this.age = Math.round(Math.random() * 600);
     this.cooldown = Math.random() * 100 + 100;
 }
 
 Enemy.getRadiusForSize = function (size) {
     return size + 2;
+};
+
+var definedColors = [
+    {r:0, g:255, b:0},
+    {r:0, g:255, b:0},
+    {r:255, g:0, b:0},
+    {r:128, g:0, b:0},
+    {r:128, g:128, b:0},
+    {r:128, g:0, b:128},
+    {r:0, g:128, b:128},
+    {r:0, g:255, b:128},
+    {r:128, g:255, b:0},
+    {r:128, g:0, b:255},
+    {r:255, g:0, b:255}
+];
+
+Enemy.getColorForSize = function (size) {
+    while(size >= definedColors.length){
+        definedColors.push({
+            r: 50 + Math.random() * 205,
+            g: 50 + Math.random() * 205,
+            b: 50 + Math.random() * 205
+        })
+    }
+    return definedColors[size];
 };
 
 Enemy.prototype.disanceToSq = function (x, y) {
@@ -57,7 +83,7 @@ Enemy.prototype.disanceToSq = function (x, y) {
     return dx * dx + dy * dy;
 };
 
-Enemy.prototype.move = function (grains, bullets) {
+Enemy.prototype.move = function (grains, bullets, deathScroll) {
     if (this.wasKilled) {
         throw new Error('This enemy was killed and shoult have been destroyed!');
     }
@@ -69,12 +95,14 @@ Enemy.prototype.move = function (grains, bullets) {
         this.x = this.ctx.canvas.width - this.radius - 1;
         this.moveDir = -1;
     }
-    this.targetY = grains.drawOffset + this.ctx.canvas.height - 20 +
-        Math.sin(this.age / 10 / Math.min(5, this.size + 1)) * 20;
-    if (this.y < this.targetY - 1) {
-        this.y += 1;
-    } else if (this.y > this.targetY + 1) {
-        this.y -= 1;
+    if(!deathScroll) {
+        this.targetY = grains.drawOffset + this.ctx.canvas.height - 20 +
+            Math.sin(this.age / 10 / Math.min(5, this.size + 1)) * 20;
+        if (this.y < this.targetY - 1) {
+            this.y += 1;
+        } else if (this.y > this.targetY + 1) {
+            this.y -= 1;
+        }
     }
     this.age += 1;
     for (var i = 0; i < bullets.length; i++) {
@@ -141,16 +169,19 @@ Enemy.prototype.getGrains = function () {
 };
 
 Enemy.prototype.shoot = function (player) {
-    var bulletGrains = [];
-    for (var i = 0; i < 9; i++) {
-        bulletGrains.push({
-            r: 255,
-            g: 0,
-            b: 0
-        })
+    if(player.life <= 0){
+        return;
     }
-    if (this.cooldown <= 0) {
+    if (this.cooldown <= 0 || this.age > 36000) {
+        var bulletGrains = [];
         this.cooldown = 500;
+        for (var i = 0; i < 9; i++) {
+            bulletGrains.push({
+                r: 255,
+                g: 0,
+                b: 0
+            })
+        }
         var dx = player.x - this.x;
         var dy = player.y - this.y;
         var angle = Math.atan2(-dx, dy);

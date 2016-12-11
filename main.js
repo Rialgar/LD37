@@ -13,10 +13,59 @@ window.addEventListener('load', function () {
     var bullets = [];
     var enemies = [];
 
+    var deathScroll = false;
+    var deathScrollCounter = 0;
+    var maxDrawOffset = 0;
+    var spawnCountdown = 300;
+
     function addEnemy(size){
-        var y = grains.drawOffset + gameHeight - 20;
+        var y = grains.drawOffset + gameHeight + 50;
         var x = Math.round(Math.random()*gameWidth);
         enemies.push(new Enemy(x, y, size, ctx));
+    }
+
+    var scriptedWaves = [
+        [0],
+        [1],
+        [0,0,0,0],
+        [1,1,1,1],
+        [2],
+        [2,2,2],
+        [2,2,2,2],
+        [2,2,1,1,2,2],
+        [3,3],
+        [3,3,3,3,3,3],
+        [10],
+        [4,4,4],
+        [4,4,4,4,3,3,3],
+        [5,5],
+        [5,5,5,5],
+        [5,5,5,5,5,5]
+    ];
+
+    var level = 5;
+    var timesSpawnedThisLevel = 0;
+    function spawnWave(){
+        if(scriptedWaves.length > 0){
+            scriptedWaves.shift().forEach(addEnemy);
+        } else {
+            var newLevel = Math.floor(maxDrawOffset / 100) + 5;
+            if (newLevel > level) {
+                level += 1;
+                timesSpawnedThisLevel = 0;
+            }
+            var i;
+            if(timesSpawnedThisLevel%5 == 0){
+                for (i = 0; i < Math.floor(timesSpawnedThisLevel/5)+1; i++) {
+                    addEnemy(level + 15)
+                }
+            } else {
+                for (i = 0; i < timesSpawnedThisLevel + Math.max(5, 10 - level); i++) {
+                    addEnemy(Math.floor(Math.random() * level) + 1);
+                }
+            }
+            timesSpawnedThisLevel += 1;
+        }
     }
 
     var scale = 1;
@@ -165,15 +214,24 @@ window.addEventListener('load', function () {
                 mx += 1;
             }
         }
-        player.move(mx, grains);
-        if (mouseUser) {
-            var dx = mouseX - player.x;
-            var dy = mouseY - player.y;
-            player.aim(Math.atan2(-dx, dy));
-        } else {
-            player.aim(gamepad.aimAngle);
+
+        if(player.life > 0) {
+            player.move(mx, grains, bullets);
+            if (mouseUser) {
+                var dx = mouseX - player.x;
+                var dy = mouseY - player.y;
+                player.aim(Math.atan2(-dx, dy));
+            } else {
+                player.aim(gamepad.aimAngle);
+            }
+            player.draw(grains.drawOffset);
+            if(player.life <= 0){
+                player.getGrains().forEach(function (grain) {
+                    grains.makeGrain(grain);
+                });
+                deathScroll = -1;
+            }
         }
-        player.draw(grains.drawOffset);
 
         if (autofire || down['mouse'] || gamepad.fire) {
             var bullet = player.shoot(grains);
@@ -182,8 +240,10 @@ window.addEventListener('load', function () {
             }
         }
 
+        var hadEnemies = false;
         enemies.forEach(function(enemy){
-            enemy.move(grains, bullets);
+            hadEnemies = true;
+            enemy.move(grains, bullets, deathScroll);
             if (enemy.wasHit) {
                 enemy.getGrains().forEach(function (grain) {
                     grains.makeGrain(grain);
@@ -200,6 +260,10 @@ window.addEventListener('load', function () {
             return !enemy.wasKilled;
         });
 
+        if(hadEnemies && enemies.length === 0){
+            spawnCountdown = 120;
+        }
+
         bullets.forEach(function (bullet) {
             bullet.move(grains);
             if (bullet.hitSomething) {
@@ -214,10 +278,32 @@ window.addEventListener('load', function () {
             return !bullet.hitSomething
         });
 
-        if(player.floatingAverage > grains.drawOffset + gameHeight/3){
-            grains.increaseDrawOffset();
+        if(deathScroll){
+            if(deathScrollCounter == 0) {
+                if (grains.drawOffset > 0 && deathScroll < 0) {
+                    grains.decreaseDrawOffset();
+                } else if (deathScroll < 0) {
+                    deathScroll = 1
+                } else if (grains.drawOffset < maxDrawOffset) {
+                    grains.increaseDrawOffset();
+                } else {
+                    deathScroll = -1;
+                }
+                deathScrollCounter = 1;
+            } else {
+                deathScrollCounter -= 1;
+            }
         } else if(grains.drawOffset > 0 && player.floatingAverage < grains.drawOffset + gameHeight/8){
             grains.decreaseDrawOffset();
+        } else if(player.floatingAverage > grains.drawOffset + gameHeight/3){
+            grains.increaseDrawOffset();
+            maxDrawOffset = Math.max(maxDrawOffset, grains.drawOffset);
+        } else if(enemies.length == 0){
+            if(spawnCountdown <= 0){
+                spawnWave();
+            } else {
+                spawnCountdown -= 1;
+            }
         }
 
         window.requestAnimationFrame(frame)
@@ -252,6 +338,7 @@ window.addEventListener('load', function () {
                     addEnemy(size);
                 }
             };
+            window.frame = frame;
         };
     }
 });
