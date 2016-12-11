@@ -41,7 +41,7 @@ window.addEventListener('load', function () {
     });
     window.addEventListener('keyup', function (ev) {
         down[ev.keyCode] = false;
-        if(ev.keyCode === 70){
+        if (ev.keyCode === 70) {
             autofire = !autofire;
         }
     });
@@ -51,6 +51,9 @@ window.addEventListener('load', function () {
     var mouseUser = false;
 
     function readGamePad (pad) {
+        if (!pad) {
+            return;
+        }
         if (Math.abs(pad.axes[0]) > 0.15) {
             gamepad.leftRight = pad.axes[0];
         } else {
@@ -67,7 +70,7 @@ window.addEventListener('load', function () {
             aimUD = pad.axes[3];
         }
 
-        if(aimLR != 0 || aimUD != 0){
+        if (aimLR != 0 || aimUD != 0) {
             mouseUser = false;
             gamepad.aimAngle = Math.atan2(-aimLR, -aimUD);
         }
@@ -113,10 +116,37 @@ window.addEventListener('load', function () {
         down['mouse'] = false;
     });
 
+    var snow = 1000;
+    var weatherLength = 1000;
+    var weatherDir = -1;
+
     function frame () {
         if (navigator.getGamepads) {
             readGamePad(navigator.getGamepads()[0]);
         }
+
+        if (Math.random() < snow / 1000) {
+            grains.makeGrain(
+                Math.floor(Math.random() * gameWidth),
+                grains.drawOffset + gameHeight,
+                255,
+                255,
+                255
+            );
+        }
+
+        snow += weatherDir;
+
+        if (Math.abs(snow) > weatherLength) {
+            weatherDir = snow > 0 ? -1 : 1;
+        } else if (Math.abs(snow) < 10) {
+            weatherDir = Math.random() > 0.5 ? 1 : -1;
+            weatherLength = Math.random() * 1800;
+            snow = 10 * weatherDir;
+        }
+
+
+        console.log(snow);
 
         grains.updateGrains();
 
@@ -134,7 +164,7 @@ window.addEventListener('load', function () {
             }
         }
         player.move(mx, grains);
-        if(mouseUser) {
+        if (mouseUser) {
             var dx = mouseX - player.x;
             var dy = mouseY - player.y;
             player.aim(Math.atan2(-dx, dy));
@@ -169,7 +199,7 @@ window.addEventListener('load', function () {
 
     window.requestAnimationFrame(frame);
 
-    if(window.location.hostname === 'localhost') {
+    if (window.location.hostname === 'localhost') {
         window.debugMode = function () {
             window.grains = grains;
             window.player = player;
