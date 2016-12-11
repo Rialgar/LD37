@@ -3,7 +3,7 @@ function Player (ctx, x, y) {
     this.y = y;
     this.ctx = ctx;
 
-    this.canvas = document.createElement('canvas');
+    this.canvas = CanvasProvider.getCanvas();
     this.canvas.width = 15;
     this.canvas.height = 8;
     var innerCtx = this.canvas.getContext('2d');
@@ -27,6 +27,8 @@ function Player (ctx, x, y) {
 
     this.aimAngle = 0;
     this.cooldown = 0;
+
+    this.floatingAverage = 0;
 }
 
 Player.prototype.move = function (dx, grains) {
@@ -39,6 +41,7 @@ Player.prototype.move = function (dx, grains) {
     if(this.cooldown > 0){
         this.cooldown -= 1;
     }
+    this.floatingAverage = (60*this.floatingAverage + this.y)/61;
 };
 
 Player.prototype.draw = function (drawOffset) {

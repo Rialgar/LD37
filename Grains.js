@@ -30,6 +30,15 @@ Grains.prototype.makeGrain = function (x, y, r, g, b, momentum) {
         grain.y = this.findLowestFree(grain.x, grain.y, true);
     }
 
+    if(grain.momentum) {
+        var lengthSq = grain.momentum.x * grain.momentum.x + grain.momentum.y * grain.momentum.y;
+        if (lengthSq > 16){
+            var factor = 4/Math.sqrt(lengthSq);
+            grain.momentum.x *= factor;
+            grain.momentum.y *= factor;
+        }
+    }
+
     this.putGrain(grain);
 };
 
@@ -89,16 +98,21 @@ Grains.prototype.putGrain = function(grain){
 };
 
 Grains.prototype.moveGrain = function (grain) {
-    var newCoordinates = false;
+    var newCoordinates;
     if (grain.momentum) {
         newCoordinates = {
             x: Math.round(grain.x + grain.momentum.x),
             y: Math.round(Math.max(0, grain.y + grain.momentum.y))
         };
-        grain.momentum.x *= 0.9;
-        grain.momentum.y *= 0.9;
-        if(Math.abs(grain.momentum.x) < 0.1 && Math.abs(grain.momentum.y) < 0.1){
-            grain.momentum = false;
+        if(newCoordinates.x === grain.x && newCoordinates.y === grain.y){
+            newCoordinates = undefined;
+            grain.momentum = undefined;
+        } else {
+            if (!this.isFree(newCoordinates.x, newCoordinates.y, true)) {
+                newCoordinates.y = this.findLowestFree(newCoordinates.x, newCoordinates.y, true);
+            }
+            grain.momentum.x *= 0.9;
+            grain.momentum.y *= 0.9;
         }
     }
     if (grain.y > 0) {
@@ -141,6 +155,9 @@ Grains.prototype.isFree = function (x, y, activeIsBlocked) {
 
 Grains.prototype.findLowestFree = function (x, y, activeIsBlocked) {
     var out = y;
+    if(x < 0 || x >= this.imageData.width){
+        return out;
+    }
     while (out >= 0 && this.isFree(x, out, activeIsBlocked)) {
         out--;
     }
@@ -152,4 +169,66 @@ Grains.prototype.findLowestFree = function (x, y, activeIsBlocked) {
 
 Grains.prototype.getGrain = function(x, y){
     return this.map[y] && this.map[y][x];
+};
+
+Grains.prototype.increaseDrawOffset = function(){
+    var x, y;
+    for(x = 0; x < this.imageData.width; x++){
+        for(y = this.imageData.height-1; y > 0; y--){
+            var fromBase = ((y - 1) * this.imageData.width + x) * 4;
+            var toBase = (y * this.imageData.width + x) * 4;
+            this.imageData.data[toBase] = this.imageData.data[fromBase];
+            this.imageData.data[toBase+1] = this.imageData.data[fromBase+1];
+            this.imageData.data[toBase+2] = this.imageData.data[fromBase+2];
+            this.imageData.data[toBase+3] = this.imageData.data[fromBase+3];
+        }
+    }
+    this.drawOffset += 1;
+    for(x = 0; x < this.imageData.width; x++){
+        var grainy = this.imageData.height - 1 + this.drawOffset;
+        var grain = this.getGrain(x, grainy);
+        var base = x * 4;
+        if(grain) {
+            this.imageData.data[base] = grain.r;
+            this.imageData.data[base+1] = grain.g;
+            this.imageData.data[base+2] = grain.b;
+            this.imageData.data[base+3] = 255;
+        } else {
+            this.imageData.data[base] = 0;
+            this.imageData.data[base+1] = 0;
+            this.imageData.data[base+2] = 0;
+            this.imageData.data[base+3] = 0;
+        }
+    }
+};
+
+Grains.prototype.decreaseDrawOffset = function(){
+    var x, y;
+    for(x = 0; x < this.imageData.width; x++){
+        for(y = 0; y < this.imageData.height-1; y++){
+            var fromBase = ((y + 1) * this.imageData.width + x) * 4;
+            var toBase = (y * this.imageData.width + x) * 4;
+            this.imageData.data[toBase] = this.imageData.data[fromBase];
+            this.imageData.data[toBase+1] = this.imageData.data[fromBase+1];
+            this.imageData.data[toBase+2] = this.imageData.data[fromBase+2];
+            this.imageData.data[toBase+3] = this.imageData.data[fromBase+3];
+        }
+    }
+    this.drawOffset -= 1;
+    for(x = 0; x < this.imageData.width; x++){
+        var grainy = this.drawOffset;
+        var grain = this.getGrain(x, grainy);
+        var base = ((this.imageData.height-1) * this.imageData.width + x) * 4;
+        if(grain) {
+            this.imageData.data[base] = grain.r;
+            this.imageData.data[base+1] = grain.g;
+            this.imageData.data[base+2] = grain.b;
+            this.imageData.data[base+3] = 255;
+        } else {
+            this.imageData.data[base] = 0;
+            this.imageData.data[base+1] = 0;
+            this.imageData.data[base+2] = 0;
+            this.imageData.data[base+3] = 0;
+        }
+    }
 };

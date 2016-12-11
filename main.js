@@ -13,13 +13,18 @@ window.addEventListener('load', function () {
     var bullets = [];
     var enemies = [];
 
-    var scale = 1;
+    function addEnemy(size){
+        var y = grains.drawOffset + gameHeight - 20;
+        var x = Math.round(Math.random()*gameWidth);
+        enemies.push(new Enemy(x, y, size, ctx));
+    }
 
+    var scale = 1;
     function onResize () {
         var docWidth = document.documentElement.clientWidth;
         var docHeight = document.documentElement.clientHeight;
 
-        scale = Math.max(1, Math.floor(Math.min(docWidth / gameWidth, docHeight / gameHeight)));
+        scale = Math.min(4, Math.max(1, Math.floor(Math.min(docWidth / gameWidth, docHeight / gameHeight))));
 
         var canWidth = gameWidth * scale;
         var canHeight = gameHeight * scale;
@@ -98,7 +103,7 @@ window.addEventListener('load', function () {
 
         var boundingBox = canvas.getBoundingClientRect();
         mouseX = (ev.clientX - boundingBox.left) / scale;
-        mouseY = gameHeight - (ev.clientY - boundingBox.top) / scale;
+        mouseY = gameHeight - (ev.clientY - boundingBox.top) / scale + grains.drawOffset;
 
         var dx = mouseX - player.x;
         var dy = mouseY - player.y;
@@ -179,10 +184,14 @@ window.addEventListener('load', function () {
 
         enemies.forEach(function(enemy){
             enemy.move(grains, bullets);
-            if (enemy.wasKilled) {
+            if (enemy.wasHit) {
                 enemy.getGrains().forEach(function (grain) {
                     grains.makeGrain(grain);
                 });
+            }
+            var bullet = enemy.shoot(player);
+            if(bullet){
+                bullets.push(bullet);
             }
             enemy.draw(grains.drawOffset);
         });
@@ -205,16 +214,16 @@ window.addEventListener('load', function () {
             return !bullet.hitSomething
         });
 
+        if(player.floatingAverage > grains.drawOffset + gameHeight/3){
+            grains.increaseDrawOffset();
+        } else if(grains.drawOffset > 0 && player.floatingAverage < grains.drawOffset + gameHeight/8){
+            grains.decreaseDrawOffset();
+        }
+
         window.requestAnimationFrame(frame)
     }
 
     window.requestAnimationFrame(frame);
-
-    function addEnemy(){
-        var y = grains.drawOffset + gameHeight - 20;
-        var x = Math.round(Math.random()*gameWidth);
-        enemies.push(new Enemy(x, y, ctx));
-    }
 
     if (window.location.hostname === 'localhost') {
         window.debugMode = function () {
@@ -237,7 +246,12 @@ window.addEventListener('load', function () {
                     );
                 }
             };
-            window.addEnemy = addEnemy;
+            window.addEnemy = function(size, count){
+                count |= 1;
+                for(var i = 0; i < count; i++){
+                    addEnemy(size);
+                }
+            };
         };
     }
 });
