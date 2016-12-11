@@ -14,6 +14,7 @@ window.addEventListener('load', function () {
     var player = new Player(ctx, 10, 0);
     var bullets = [];
     var enemies = [];
+    var pickups = [];
 
     var deathScroll = false;
     var deathScrollCounter = 0;
@@ -70,6 +71,10 @@ window.addEventListener('load', function () {
         }
     }
 
+    function addPickup(x, y){
+        pickups.push(new Pickup(x, y, ctx));
+    }
+
     var scale = 1;
     function onResize () {
         var docWidth = document.documentElement.clientWidth;
@@ -105,7 +110,6 @@ window.addEventListener('load', function () {
 
     var down = {};
     window.addEventListener('keydown', function (ev) {
-        console.log(ev.keyCode);
         down[ev.keyCode] = true;
     });
     window.addEventListener('keyup', function (ev) {
@@ -129,17 +133,13 @@ window.addEventListener('load', function () {
             gamepad.leftRight = 0;
         }
 
+        var lengthSq = pad.axes[2]*pad.axes[2] + pad.axes[3]*pad.axes[3];
+
         var aimLR = 0;
-        if (Math.abs(pad.axes[2]) > 0.3) {
-            aimLR = pad.axes[2];
-        }
-
         var aimUD = 0;
-        if (Math.abs(pad.axes[3]) > 0.3) {
+        if (lengthSq > 0.16) {
+            aimLR = pad.axes[2];
             aimUD = pad.axes[3];
-        }
-
-        if (aimLR != 0 || aimUD != 0) {
             mouseUser = false;
             gamepad.aimAngle = Math.atan2(-aimLR, -aimUD);
         }
@@ -252,9 +252,9 @@ window.addEventListener('load', function () {
         }
 
         if (autofire || down['mouse'] || gamepad.fire) {
-            var bullet = player.shoot(grains);
-            if (bullet) {
-                bullets.push(bullet);
+            var newBullets = player.shoot(grains);
+            if (newBullets) {
+                bullets = bullets.concat(newBullets);
             }
         }
 
@@ -272,6 +272,9 @@ window.addEventListener('load', function () {
                 bullets.push(bullet);
             }
             enemy.draw(grains.drawOffset);
+            if(enemy.droppedPickup){
+                addPickup(enemy.x, enemy.y);
+            }
         });
 
         enemies = enemies.filter(function (enemy) {
@@ -294,6 +297,15 @@ window.addEventListener('load', function () {
 
         bullets = bullets.filter(function (bullet) {
             return !bullet.hitSomething
+        });
+
+        pickups.forEach(function (pickup) {
+            pickup.move(grains, player);
+            pickup.draw(grains.drawOffset);
+        });
+
+        pickups = pickups.filter(function (pickup) {
+            return !pickup.pickedUp;
         });
 
         if(deathScroll){
@@ -357,6 +369,8 @@ window.addEventListener('load', function () {
                 }
             };
             window.frame = frame;
+
+            window.addPickup = addPickup;
         };
     }
 });

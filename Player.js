@@ -49,6 +49,8 @@ function Player (ctx, x, y) {
     this.floatingAverage = 0;
     this.maxHeight = 0;
     this.life = 10;
+
+    this.pickUpTime = 0;
 }
 
 Player.prototype.disanceToSq = function (x, y) {
@@ -77,6 +79,9 @@ Player.prototype.move = function (dx, grains, bullets) {
             bullet.hitEnemy = true;
             break;
         }
+    }
+    if(this.pickUpTime > 0){
+        this.pickUpTime = Math.max(0, this.pickUpTime - 1);
     }
 };
 
@@ -111,9 +116,23 @@ Player.prototype.shoot = function(grains){
         if(inputGrains.length === 9){
             inputGrains.forEach(grains.removeGrain.bind(grains));
             this.cooldown = 15;
-            return new Bullet(this.x, this.y, this.aimAngle, inputGrains, this.ctx);
+            if(this.pickUpTime > 0){
+                return [
+                    new Bullet(this.x, this.y, this.aimAngle - Math.PI/16, inputGrains, this.ctx),
+                    new Bullet(this.x, this.y, this.aimAngle, inputGrains, this.ctx),
+                    new Bullet(this.x, this.y, this.aimAngle + Math.PI/16, inputGrains, this.ctx)
+                ];
+            } else {
+                return [new Bullet(this.x, this.y, this.aimAngle, inputGrains, this.ctx)];
+            }
+
         }
     }
+};
+
+Player.prototype.pickUp = function(){
+    this.pickUpTime += 600 - 600*(this.pickUpTime/(this.pickUpTime+600));
+    console.log(this.pickUpTime);
 };
 
 Player.prototype.getGrains = function () {

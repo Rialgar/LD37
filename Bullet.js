@@ -11,6 +11,7 @@ function Bullet (x, y, angle, inputGrains, ctx, enemyBullet) {
     this.imageData = this.innerContext.createImageData(3, 3);
 
     this.grains = [];
+    inputGrains = inputGrains.slice();
     for (var dx = -1; dx <= 1; dx++) {
         for (var dy = -1; dy <= 1; dy++) {
             var input = inputGrains.pop();
@@ -56,7 +57,7 @@ Bullet.prototype.move = function (grains) {
     } else if (this.x > this.ctx.canvas.width - 2) {
         this.x = this.ctx.canvas.width - 2;
         this.hitSomething = true;
-    } else if(this.age > 300){
+    } else if(this.age > 90){
         this.hitSomething = true;
     } else {
         for (var dx = -1; dx <= 1 && !this.hitSomething; dx++) {

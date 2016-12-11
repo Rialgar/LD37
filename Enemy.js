@@ -115,6 +115,7 @@ Enemy.prototype.move = function (grains, bullets, deathScroll) {
                 this.wasKilled = true;
                 CanvasProvider.returnCanvas(this.canvas);
                 this.lostGrains = this.grains;
+                this.droppedPickup = 2*Math.random() + 1 < this.initialRadius / 5;
             } else {
                 this.radius = Enemy.getRadiusForSize(this.size);
                 var keptGrains = [];
