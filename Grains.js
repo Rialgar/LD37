@@ -7,36 +7,30 @@ function Grains (ctx) {
     this.drawOffset = 0;
 }
 
-Grains.prototype.makeGrain = function (x, y, r, g, b) {
+Grains.prototype.makeGrain = function (x, y, r, g, b, momentum) {
+    var grain;
     if(typeof x === 'object'){
-        y = x.y;
-        r = x.r;
-        g = x.g;
-        b = x.b;
-        x = x.x;
+        grain = x;
+    } else {
+        grain = {
+            x: x,
+            y: y,
+            r: r,
+            g: g,
+            b: b,
+            momentum: momentum
+        };
     }
-    if (y < 0 || x < 0 || x >= this.imageData.width) {
+    if (grain.y < 0 || grain.x < 0 || grain.x >= this.imageData.width) {
         throw new Error("Grain position out of bounds. (" + x + "," + y + ")");
-    } else if (y > (1 << 20)) {
+    } else if (grain.y > (1 << 20)) {
         throw new Error("Icarus flew too close to the sun! (" + x + "," + y + ")");
     }
-    if (this.map[y] && this.map[y][x]) {
-        y = this.findLowestFree(x, y, true);
+    if (this.map[grain.y] && this.map[grain.y][grain.x]) {
+        grain.y = this.findLowestFree(grain.x, grain.y, true);
     }
-    var grain = {
-        x: x,
-        y: y,
-        r: r,
-        g: g,
-        b: b,
-        active: true
-    };
-    this.activeGrains.push(grain);
-    while (this.map.length < y + 1) {
-        this.map.push([]);
-    }
-    this.map[y][x] = grain;
-    this.putGrainPixel(grain, 255);
+
+    this.putGrain(grain);
 };
 
 Grains.prototype.getDxArray = function () {
@@ -84,14 +78,36 @@ Grains.prototype.removeGrain = function (grain) {
     }
 };
 
+Grains.prototype.putGrain = function(grain){
+    this.nextActiveGrains.push(grain);
+    grain.active = true;
+    while (this.map.length < grain.y + 1) {
+        this.map.push([]);
+    }
+    this.map[grain.y][grain.x] = grain;
+    this.putGrainPixel(grain, 255);
+};
+
 Grains.prototype.moveGrain = function (grain) {
     var newCoordinates = false;
+    if (grain.momentum) {
+        newCoordinates = {
+            x: Math.round(grain.x + grain.momentum.x),
+            y: Math.round(Math.max(0, grain.y + grain.momentum.y))
+        };
+        grain.momentum.x *= 0.8;
+        grain.momentum.y *= 0.8;
+        if(Math.abs(grain.momentum.x) < 1 && Math.abs(grain.momentum.y) < 1){
+            grain.momentum = false;
+        }
+    }
     if (grain.y > 0) {
         var dxArray = this.getDxArray();
         for (var i = 0; i < dxArray.length; i++) {
-            var otherX = grain.x + dxArray[i];
-            if (otherX >= 0 && otherX < this.imageData.width && !this.map[grain.y - 1][otherX]) {
-                newCoordinates = {x: otherX, y: grain.y - 1};
+            var otherX = (newCoordinates ? newCoordinates.x : grain.x) + dxArray[i];
+            var otherY = (newCoordinates ? newCoordinates.y : grain.y) - 1;
+            if (this.isFree(otherX, otherY, true)) {
+                newCoordinates = {x: otherX, y: otherY};
                 break;
             }
         }
@@ -102,13 +118,9 @@ Grains.prototype.moveGrain = function (grain) {
         grain.x = newCoordinates.x;
         grain.y = newCoordinates.y;
 
-        this.map[grain.y][grain.x] = grain;
-        this.nextActiveGrains.push(grain);
+        this.putGrain(grain);
     } else {
         grain.active = false;
-    }
-    if (newCoordinates) {
-        this.putGrainPixel(grain, 255);
     }
 };
 

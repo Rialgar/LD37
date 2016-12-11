@@ -5,12 +5,6 @@ function Bullet (x, y, angle, inputGrains, ctx) {
     this.ctx = ctx;
 
     this.grains = [];
-    this.canvas = document.createElement('canvas');
-    this.canvas.height = 3;
-    this.canvas.width = 3;
-    var innerCtx = this.canvas.getContext('2d');
-    var imageData = innerCtx.createImageData(3, 3);
-
     for (var dx = -1; dx <= 1; dx++) {
         for (var dy = -1; dy <= 1; dy++) {
             var input = inputGrains.pop();
@@ -21,15 +15,8 @@ function Bullet (x, y, angle, inputGrains, ctx) {
                 g: input.g,
                 b: input.b
             });
-            var base = ((dy + 1) * imageData.width + (dx + 1)) * 4;
-            imageData.data[base] = input.r;
-            imageData.data[base + 1] = input.g;
-            imageData.data[base + 2] = input.b;
-            imageData.data[base + 3] = 255;
         }
     }
-    innerCtx.putImageData(imageData, 0, 0);
-
     this.age = 0;
 }
 
@@ -63,7 +50,17 @@ Bullet.prototype.move = function (grains) {
 Bullet.prototype.draw = function (drawOffset) {
     var tx = Math.round(this.x - 1);
     var ty = Math.round(this.ctx.canvas.height - 1 - (this.y - drawOffset));
-    this.ctx.drawImage(this.canvas, tx, ty);
+    var imageData = this.ctx.getImageData(tx, ty, 3, 3);
+    this.grains.forEach(function(grain){
+        var y = 1 - grain.y;
+        var x = grain.x+1;
+        var base = (y * 3 + x) * 4;
+        imageData.data[base] = grain.r;
+        imageData.data[base+1] = grain.g;
+        imageData.data[base+2] = grain.b;
+        imageData.data[base+3] = 255;
+    });
+    this.ctx.putImageData(imageData, tx, ty);
 };
 
 Bullet.prototype.getGrains = function () {
@@ -74,7 +71,11 @@ Bullet.prototype.getGrains = function () {
             y: grain.y + Math.round(self.y),
             r: grain.r,
             g: grain.g,
-            b: grain.b
+            b: grain.b,
+            momentum: {
+                x: 2*grain.x,
+                y: 2*grain.y
+            }
         }
     })
 };

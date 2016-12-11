@@ -144,10 +144,6 @@ window.addEventListener('load', function () {
             weatherLength = Math.random() * 1800;
             snow = 10 * weatherDir;
         }
-
-
-        console.log(snow);
-
         grains.updateGrains();
 
         var mx = 0;
