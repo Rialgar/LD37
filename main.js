@@ -11,6 +11,7 @@ window.addEventListener('load', function () {
     var grains = new Grains(ctx, gameWidth, gameHeight);
     var player = new Player(ctx, 10, 0);
     var bullets = [];
+    var enemies = [];
 
     var scale = 1;
 
@@ -176,6 +177,20 @@ window.addEventListener('load', function () {
             }
         }
 
+        enemies.forEach(function(enemy){
+            enemy.move(grains, bullets);
+            if (enemy.wasKilled) {
+                enemy.getGrains().forEach(function (grain) {
+                    grains.makeGrain(grain);
+                });
+            }
+            enemy.draw(grains.drawOffset);
+        });
+
+        enemies = enemies.filter(function (enemy) {
+            return !enemy.wasKilled;
+        });
+
         bullets.forEach(function (bullet) {
             bullet.move(grains);
             if (bullet.hitSomething) {
@@ -194,6 +209,12 @@ window.addEventListener('load', function () {
     }
 
     window.requestAnimationFrame(frame);
+
+    function addEnemy(){
+        var y = grains.drawOffset + gameHeight - 20;
+        var x = Math.round(Math.random()*gameWidth);
+        enemies.push(new Enemy(x, y, ctx));
+    }
 
     if (window.location.hostname === 'localhost') {
         window.debugMode = function () {
@@ -215,7 +236,8 @@ window.addEventListener('load', function () {
                         0
                     );
                 }
-            }
+            };
+            window.addEnemy = addEnemy;
         };
     }
 });

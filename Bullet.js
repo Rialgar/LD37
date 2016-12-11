@@ -23,6 +23,9 @@ function Bullet (x, y, angle, inputGrains, ctx) {
 Bullet.prototype.move = function (grains) {
     if (this.hitSomething) {
         throw new Error('This bullet hit something, it should have been destroyed');
+    } else if (this.hitEnemy){
+        this.hitSomething = true;
+        return;
     }
     this.x -= 2 * Math.sin(this.angle);
     this.y += 2 * Math.cos(this.angle);
@@ -73,8 +76,8 @@ Bullet.prototype.getGrains = function () {
             g: grain.g,
             b: grain.b,
             momentum: {
-                x: 2*grain.x,
-                y: 2*grain.y
+                x: grain.x,
+                y: grain.y
             }
         }
     })

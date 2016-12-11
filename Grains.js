@@ -95,9 +95,9 @@ Grains.prototype.moveGrain = function (grain) {
             x: Math.round(grain.x + grain.momentum.x),
             y: Math.round(Math.max(0, grain.y + grain.momentum.y))
         };
-        grain.momentum.x *= 0.8;
-        grain.momentum.y *= 0.8;
-        if(Math.abs(grain.momentum.x) < 1 && Math.abs(grain.momentum.y) < 1){
+        grain.momentum.x *= 0.9;
+        grain.momentum.y *= 0.9;
+        if(Math.abs(grain.momentum.x) < 0.1 && Math.abs(grain.momentum.y) < 0.1){
             grain.momentum = false;
         }
     }
