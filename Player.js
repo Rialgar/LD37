@@ -47,6 +47,7 @@ function Player (ctx, x, y) {
     this.cooldown = 0;
 
     this.floatingAverage = 0;
+    this.maxHeight = 0;
     this.life = 10;
 }
 
@@ -67,6 +68,7 @@ Player.prototype.move = function (dx, grains, bullets) {
         this.cooldown -= 1;
     }
     this.floatingAverage = (60*this.floatingAverage + this.y)/61;
+    this.maxHeight = Math.max(this.y, this.maxHeight);
     for (var i = 0; i < bullets.length; i++) {
         var bullet = bullets[i];
         if (bullet.enemyBullet && !bullet.hitEnemy && this.disanceToSq(bullet.x, bullet.y) < 9) {

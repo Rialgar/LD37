@@ -10,12 +10,19 @@
         <script type="application/javascript" src="Enemy.js"></script>
         <script type="application/javascript" src="main.js"></script>
         <style>
+            * {
+                -moz-user-select: none;
+                -webkit-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
             html, body {
                 padding: 0;
                 margin: 0;
                 width: 100%;
                 background-color: black;
                 overflow: hidden;
+                font-family: "Times New Roman", serif;
             }
             canvas {
                 border: 1px solid deeppink;
@@ -26,9 +33,43 @@
                 image-rendering: crisp-edges;
                 image-rendering: pixelated;
             }
+            #lives {
+                transform-origin: 0 0;
+                font-size: 5px;
+                position: absolute;
+            }
+            #lives span.inactive.life{
+                color: transparent;
+            }
+            #lives span.life {
+
+                color: red;
+            }
+            #score {
+                color: #B8860B;
+                font-size: 5px;
+                text-align: right;
+                position: absolute;
+                transform-origin: 100% 0;
+            }
         </style>
     </head>
     <body>
+        <div id="lives">
+            <span class="life">❤</span>
+            <span class="life">❤</span>
+            <span class="life">❤</span>
+            <span class="life">❤</span>
+            <span class="life">❤</span>
+            <span class="life">❤</span>
+            <span class="life">❤</span>
+            <span class="life">❤</span>
+            <span class="life">❤</span>
+            <span class="life">❤</span>
+        </div>
+        <div id="score">
+            0.0m
+        </div>
         <canvas id="canvas"/>
     </body>
 </html>

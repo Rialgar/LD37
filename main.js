@@ -3,6 +3,8 @@ window.addEventListener('load', function () {
     var gameWidth = 160;
     var gameHeight = 120;
 
+    var liveDiv = document.getElementById('lives');
+    var scoreDiv = document.getElementById('score');
     var canvas = document.getElementById('canvas');
     canvas.width = gameWidth;
     canvas.height = gameHeight;
@@ -77,11 +79,23 @@ window.addEventListener('load', function () {
 
         var canWidth = gameWidth * scale;
         var canHeight = gameHeight * scale;
+        var canvasTop = Math.floor((docHeight - canHeight) / 2);
+        var canvasLeft = Math.floor((docWidth - canWidth) / 2);
 
         canvas.style.width = canWidth + 'px';
         canvas.style.height = canHeight + 'px';
-        canvas.style.top = Math.floor((docHeight - canHeight) / 2) + 'px';
-        canvas.style.left = Math.floor((docWidth - canWidth) / 2) + 'px';
+        canvas.style.top = canvasTop + 'px';
+        canvas.style.left = canvasLeft + 'px';
+
+        liveDiv.style.transform = 'scale(' + scale + ')';
+        liveDiv.style.height = 6*scale + 'px';
+        liveDiv.style.top = (canvasTop - 6*scale) + 'px';
+        liveDiv.style.left = canvasLeft + 'px';
+
+        scoreDiv.style.transform = 'scale(' + scale + ')';
+        scoreDiv.style.height = 6*scale + 'px';
+        scoreDiv.style.top = (canvasTop - 6*scale) + 'px';
+        scoreDiv.style.right = canvasLeft + 'px';
     }
 
     window.addEventListener('resize', onResize);
@@ -231,6 +245,10 @@ window.addEventListener('load', function () {
                 });
                 deathScroll = -1;
             }
+            for(var i = player.life; i < 10; i++){
+                liveDiv.children[i].classList.add('inactive');
+            }
+            scoreDiv.textContent = ((player.maxHeight-4) / 10) + 'm';
         }
 
         if (autofire || down['mouse'] || gamepad.fire) {
