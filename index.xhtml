@@ -53,6 +53,14 @@
                 position: absolute;
                 transform-origin: 100% 0;
             }
+            #help {
+                color: #B8860B;
+                font-size: 5px;
+                text-align: center;
+                position: absolute;
+                transform-origin: 50% 0;
+                transition: opacity 0.5s ease-in-out;
+            }
         </style>
     </head>
     <body>
@@ -72,5 +80,13 @@
             0.0m
         </div>
         <canvas id="canvas"/>
+        <table id="help">
+            <tr><th>Keyboard</th><th>Gamepad</th><th>Action</th></tr>
+            <tr><td>H</td><td></td><td>Show/Hide Help</td></tr>
+            <tr><td>A/D</td><td>Left Joystick or L2/R2</td><td>Move Left/Right</td></tr>
+            <tr><td>Mouse</td><td>Right Joystick</td><td>Aim</td></tr>
+            <tr><td>Click</td><td>L1 / R1</td><td>Fire</td></tr>
+            <tr><td>F</td><td>A / B / X / Y</td><td>Toggle Auto Fire</td></tr>
+        </table>
     </body>
 </html>

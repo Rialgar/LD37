@@ -5,6 +5,7 @@ window.addEventListener('load', function () {
 
     var liveDiv = document.getElementById('lives');
     var scoreDiv = document.getElementById('score');
+    var helpTable = document.getElementById('help');
     var canvas = document.getElementById('canvas');
     canvas.width = gameWidth;
     canvas.height = gameHeight;
@@ -84,7 +85,7 @@ window.addEventListener('load', function () {
 
         var canWidth = gameWidth * scale;
         var canHeight = gameHeight * scale;
-        var canvasTop = Math.floor((docHeight - canHeight) / 2);
+        var canvasTop = 20*scale;
         var canvasLeft = Math.floor((docWidth - canWidth) / 2);
 
         canvas.style.width = canWidth + 'px';
@@ -92,15 +93,21 @@ window.addEventListener('load', function () {
         canvas.style.top = canvasTop + 'px';
         canvas.style.left = canvasLeft + 'px';
 
-        liveDiv.style.transform = 'scale(' + scale + ')';
+        liveDiv.style.fontSize = 5*scale + 'px';
         liveDiv.style.height = 6*scale + 'px';
-        liveDiv.style.top = (canvasTop - 6*scale) + 'px';
+        liveDiv.style.top = (canvasTop - 7*scale) + 'px';
         liveDiv.style.left = canvasLeft + 'px';
 
-        scoreDiv.style.transform = 'scale(' + scale + ')';
+        scoreDiv.style.fontSize = 5*scale + 'px';
         scoreDiv.style.height = 6*scale + 'px';
-        scoreDiv.style.top = (canvasTop - 6*scale) + 'px';
+        scoreDiv.style.top = (canvasTop - 7*scale) + 'px';
         scoreDiv.style.right = canvasLeft + 'px';
+
+        helpTable.style.fontSize = 5*scale + 'px';
+        helpTable.style.height = 60*scale + 'px';
+        helpTable.style.width = canWidth + 'px';
+        helpTable.style.top = (canvasTop + canHeight + 10) + 'px';
+        helpTable.style.left = canvasLeft + 'px';
     }
 
     window.addEventListener('resize', onResize);
@@ -109,17 +116,18 @@ window.addEventListener('load', function () {
     var autofire = false;
 
     var down = {};
+    var newlyDown = {};
     window.addEventListener('keydown', function (ev) {
+        if(!down[ev.keyCode]) {
+            newlyDown[ev.keyCode] = true;
+        }
         down[ev.keyCode] = true;
     });
     window.addEventListener('keyup', function (ev) {
         down[ev.keyCode] = false;
-        if (ev.keyCode === 70) {
-            autofire = !autofire;
-        }
     });
 
-    var gamepad = {leftRight: 0, leftShoulder: 0, rShoulder: 0, fire: false, aimAngle: 0};
+    var gamepad = {leftRight: 0, leftShoulder: 0, rShoulder: 0, fire: false, aimAngle: 0, autoButtonDown: false, toggleAuto: false};
 
     var mouseUser = false;
 
@@ -157,6 +165,14 @@ window.addEventListener('load', function () {
         }
 
         gamepad.fire = pad.buttons[4].pressed || pad.buttons[5].pressed;
+
+        if(pad.buttons[0].pressed || pad.buttons[1].pressed || pad.buttons[2].pressed || pad.buttons[3].pressed){
+            gamepad.toggleAuto = !pad.autoButtonDown;
+            gamepad.autoButtonDown = true;
+        } else {
+            gamepad.toggleAuto = false;
+            gamepad.autoButtonDown = false;
+        }
     }
 
     var mouseX, mouseY;
@@ -192,6 +208,19 @@ window.addEventListener('load', function () {
     function frame () {
         if (navigator.getGamepads) {
             readGamePad(navigator.getGamepads()[0]);
+        }
+
+        if (newlyDown[70] || gamepad.toggleAuto) {
+            autofire = !autofire;
+            console.log(autofire);
+        }
+
+        if (newlyDown[72]) {
+            if(helpTable.style.opacity != 0) {
+                helpTable.style.opacity = 0;
+            } else {
+                helpTable.style.opacity = 1;
+            }
         }
 
         if (Math.random() < snow / 1000) {
@@ -336,6 +365,9 @@ window.addEventListener('load', function () {
             }
         }
 
+        for(var key in newlyDown){
+            delete newlyDown[key];
+        }
         window.requestAnimationFrame(frame)
     }
 
